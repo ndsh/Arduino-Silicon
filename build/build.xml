@@ -341,7 +341,7 @@
             displayname="Arduino Classic"
             executablename="Arduino"
             identifier="cc.arduino.Arduino"
-            shortversion="${version}"
+            shortversion="${revision}"
             version="${revision}"
             signature="Pde1"
             icon="macosx/processing.icns"

@@ -13,6 +13,7 @@ TEENSY_TOOLS_VERSION="${TEENSY_TOOLS_VERSION:-1.61.0}"
 TEENSY_COMPILE_VERSION="${TEENSY_COMPILE_VERSION:-11.3.1}"
 APP_NAME="Arduino Classic"
 APP_DISPLAY_NAME="Arduino Classic"
+APP_MAINTAINER="${APP_MAINTAINER:-Julian Hespenheide}"
 ASSETS="$REPO_ROOT/assets/icons"
 APP_ICON_PNG="${APP_ICON_PNG:-$ASSETS/app-icon.png}"
 PDE_ICON_PNG="${PDE_ICON_PNG:-$ASSETS/pde-icon.png}"
@@ -306,18 +307,28 @@ register_app_icon() {
   "$lsregister" -f "$app" >/dev/null 2>&1 || true
 }
 
+app_version() {
+  if [[ -n "${APP_VERSION:-}" ]]; then
+    echo "$APP_VERSION"
+    return
+  fi
+  grep 'VERSION_NAME = ' "$REPO_ROOT/arduino-core/src/processing/app/BaseNoGui.java" \
+    | sed -n 's/.*"\([^"]*\)".*/\1/p' | head -1
+}
+
 patch_app_branding() {
   local app="$1"
   local plist="$app/Contents/Info.plist"
   [[ -f "$plist" ]] || return 0
-  step "set app display name → $APP_DISPLAY_NAME"
+  local version maintainer copyright
+  version="$(app_version)"
+  maintainer="$APP_MAINTAINER"
+  copyright="Arduino LLC. Maintained by: ${maintainer}"
+  step "set app metadata → $APP_DISPLAY_NAME $version"
   plutil -replace CFBundleDisplayName -string "$APP_DISPLAY_NAME" "$plist"
   plutil -replace CFBundleName -string "$APP_DISPLAY_NAME" "$plist"
-  sed -i '' \
-    -e "s|-Dapple.awt.application.name=Arduino|-Dapple.awt.application.name=${APP_DISPLAY_NAME}|" \
-    -e "s|-Xdock:name=Arduino|-Xdock:name=${APP_DISPLAY_NAME}|" \
-    -e "s|-Dcom.apple.mrj.application.apple.menu.about.name=Arduino|-Dcom.apple.mrj.application.apple.menu.about.name=${APP_DISPLAY_NAME}|" \
-    "$plist"
+  plutil -replace CFBundleShortVersionString -string "$version" "$plist"
+  plutil -replace NSHumanReadableCopyright -string "$copyright" "$plist"
 }
 
 build_arduino() {

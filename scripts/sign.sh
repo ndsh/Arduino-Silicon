@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sign + notarize Arduino Classic.app
+# Sign + notarize Arduino Classic.app; notarization also builds dist/*.dmg
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -27,9 +27,9 @@ usage() {
   cat <<'EOF'
 Usage: ./scripts/sign.sh [sign|notarize|log SUBMISSION_ID]
 
-  ./scripts/sign.sh              sign + notarize (default)
-  ./scripts/sign.sh sign         sign only (no upload)
-  ./scripts/sign.sh notarize     sign + notarize (same as default)
+  ./scripts/sign.sh              sign + notarize + dmg (default)
+  ./scripts/sign.sh sign         sign only (no upload, no dmg)
+  ./scripts/sign.sh notarize     sign + notarize + dmg (same as default)
   ./scripts/sign.sh log ID       fetch notarization log
 
 Env vars (set in shell or in repo-root .sign.env — see .sign.env.example):
@@ -241,7 +241,14 @@ notarize_app() {
   log "verify notarization"
   spctl -a -t exec -vv "$APP"
   xcrun stapler validate "$APP"
-  log "done — $APP is signed + notarized"
+
+  log "create distributable .dmg"
+  "$SCRIPT_DIR/mkdmg.sh"
+  if [[ -n "$SIGN_IDENTITY" && -f "${APP%.app}.dmg" ]]; then
+    codesign --force --timestamp --sign "$SIGN_IDENTITY" "${APP%.app}.dmg"
+  fi
+
+  log "done — $APP is signed + notarized; ${APP%.app}.dmg"
 }
 
 run_all() {

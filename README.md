@@ -14,6 +14,7 @@ This fork ships **Arduino IDE 1.8.20** (rebranded as **Arduino Classic**) as a n
 - Teensy boards and tools pre-installed (no separate Teensyduino installer)
 - Native arm64 JNI libraries for serial port listing and code formatting
 - Rebranded as **Arduino Classic** to distinguish from upstream Arduino IDE
+- **Upload using programmer** as a Tools menu checkbox (no shift-click on the Upload button)
 
 ## More info at
 

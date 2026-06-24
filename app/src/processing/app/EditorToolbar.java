@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import static processing.app.I18n.tr;
@@ -36,21 +35,13 @@ import static processing.app.Theme.scale;
 /**
  * run/stop/etc buttons for the ide
  */
-public class EditorToolbar extends JComponent implements MouseInputListener, KeyEventDispatcher {
+public class EditorToolbar extends JComponent implements MouseInputListener {
 
   /**
    * Rollover titles for each button.
    */
   private static final String[] title = {
     tr("Verify"), tr("Upload"), tr("New"), tr("Open"), tr("Save"),
-    tr("Serial Monitor"), tr("Serial Plotter")
-  };
-
-  /**
-   * Titles for each button when the shift key is pressed.
-   */
-  private static final String[] titleShift = {
-    tr("Verify"), tr("Upload Using Programmer"), tr("New"), tr("Open"), tr("Save As..."),
     tr("Serial Monitor"), tr("Serial Plotter")
   };
 
@@ -114,8 +105,6 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
   private final Font statusFont;
   private final Color statusColor;
 
-  private boolean shiftPressed;
-
   public EditorToolbar(Editor editor, JMenu menu) {
     this.editor = editor;
     this.menu = menu;
@@ -140,7 +129,6 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
 
     addMouseListener(this);
     addMouseMotionListener(this);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
   }
 
   private void loadButtons() {
@@ -228,7 +216,7 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
     */
     if (currentRollover != -1) {
       int statusY = (BUTTON_HEIGHT + g.getFontMetrics().getAscent()) / 2;
-      String status = shiftPressed ? titleShift[currentRollover] : title[currentRollover];
+      String status = title[currentRollover];
       if (currentRollover != SERIAL && currentRollover != PLOTTER) {
         g.drawString(status, (buttonCount - 1) * BUTTON_WIDTH + 3 * BUTTON_GAP, statusY);
       } else {
@@ -396,7 +384,7 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
       case EXPORT:
         // launch a timeout timer which can reenable to upload button functionality an
         if (!editor.avoidMultipleOperations) {
-          editor.handleExport(isShiftDown);
+          editor.handleExport(editor.base.isUploadUsingProgrammer());
         }
         break;
 
@@ -467,14 +455,5 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
 
   public Dimension getMaximumSize() {
     return new Dimension(scale(30000), BUTTON_HEIGHT);
-  }
-
-  public boolean dispatchKeyEvent(final KeyEvent e) {
-    if (shiftPressed != e.isShiftDown()) {
-      shiftPressed = !shiftPressed;
-      repaint();
-    }
-    // Return false to continue processing this keyEvent
-    return false;
   }
 }

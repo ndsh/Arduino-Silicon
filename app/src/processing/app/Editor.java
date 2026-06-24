@@ -666,7 +666,7 @@ public class Editor extends JFrame implements RunnerListener {
     sketchMenu.add(item);
 
     item = newJMenuItem(tr("Upload"), 'U');
-    item.addActionListener(event -> handleExport(false));
+    item.addActionListener(event -> handleExport(base.isUploadUsingProgrammer()));
     sketchMenu.add(item);
 
     item = newJMenuItemShift(tr("Upload Using Programmer"), 'U');

@@ -15,6 +15,9 @@ ARDUINO CLASSIC — APPLE SILICON + TEENSYDUINO FORK
 * arm64 host matching for Board Manager on Apple Silicon.
 * Network update checks disabled in distributed builds.
 * macOS-only build pipeline (linux/windows packaging removed from this fork).
+* Tools menu: "Upload using programmer" checkbox (replaces shift-click upload on toolbar).
+* App bundle version and copyright metadata from build (maintainer credit in About).
+* Distribution: mkdmg.sh and release.sh; signed .dmg produced after notarization.
 
 
 ARDUINO 1.8.19 2021.12.20 SECURITY HOTFIX RELEASE

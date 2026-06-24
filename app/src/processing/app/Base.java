@@ -120,7 +120,7 @@ public class Base {
   // are the same for all windows (since the board and serial port that are
   // actually used are determined by the preferences, which are shared)
   private List<JMenu> boardsCustomMenus;
-  private List<JMenuItem> programmerMenus;
+  private List<Component> programmerMenus;
 
   private PdeKeywords pdeKeywords;
   private final List<JMenuItem> recentSketchesMenuItems = new LinkedList<>();
@@ -1670,7 +1670,7 @@ public class Base {
     throw new Exception("Custom menu not found!");
   }
 
-  public List<JMenuItem> getProgrammerMenus() {
+  public List<Component> getProgrammerMenus() {
     return programmerMenus;
   }
 
@@ -1695,9 +1695,20 @@ public class Base {
     throw new IllegalStateException("Menu has no enabled items");
   }
 
+  public boolean isUploadUsingProgrammer() {
+    return "programmer".equals(PreferencesData.get("upload.using"));
+  }
+
   public void rebuildProgrammerMenu() {
     programmerMenus = new LinkedList<>();
     ButtonGroup group = new ButtonGroup();
+
+    JCheckBoxMenuItem uploadViaProgrammer = new JCheckBoxMenuItem(
+        tr("Upload using programmer"), isUploadUsingProgrammer());
+    uploadViaProgrammer.addActionListener(e -> PreferencesData.set("upload.using",
+        uploadViaProgrammer.isSelected() ? "programmer" : "bootloader"));
+    programmerMenus.add(uploadViaProgrammer);
+    programmerMenus.add(new JSeparator());
 
     TargetBoard board = BaseNoGui.getTargetBoard();
     if (board != null) {
@@ -1722,7 +1733,7 @@ public class Base {
     }
   }
 
-  public void addProgrammersForPlatform(TargetPlatform platform, List<JMenuItem> menus, ButtonGroup group) {
+  public void addProgrammersForPlatform(TargetPlatform platform, List<Component> menus, ButtonGroup group) {
     for (String programmer : platform.getProgrammers().keySet()) {
       String id = platform.getContainerPackage().getId() + ":" + programmer;
 
