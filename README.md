@@ -70,6 +70,8 @@ Arduino uses [GNU avr-gcc toolchain](https://gcc.gnu.org/wiki/avr-gcc), [GCC ARM
 
 Teensy support is based on [Teensyduino](https://www.pjrc.com/teensy/td_download.html) by Paul Stoffregen and the PJRC community.
 
+The Apple Silicon macOS build (**Arduino Classic**) is maintained by [Julian Hespenheide](https://www.julian-h.de).
+
 Icon and about image designed by [ToDo](https://www.todo.to.it/).
 
 ## License
