@@ -143,7 +143,11 @@ public class Base {
         String.valueOf(!System.getProperty("os.version").startsWith("10.13")
           || isMacOsAboutMenuItemPresent()));
 
-      ThinkDifferent.init();
+      try {
+        ThinkDifferent.init();
+      } catch (Throwable macE) {
+        System.err.println("macOS integrations unavailable: " + macE);
+      }
     }
 
     try {

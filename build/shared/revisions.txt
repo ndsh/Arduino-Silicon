@@ -1,4 +1,20 @@
-ARDUINO 1.8.20 not yet released
+ARDUINO 1.8.20 2026.06.24
+
+ARDUINO CLASSIC — APPLE SILICON + TEENSYDUINO FORK
+
+[ide]
+* macOS Apple Silicon (arm64) native IDE shell with bundled JDK 17.
+* Rebranded as "Arduino Classic" (fork of 1.8.19; not an official Arduino release).
+* Teensyduino boards and tools pre-installed (no separate installer).
+* Custom splash screen and toolbar artwork (Serial Monitor + Serial Plotter buttons).
+* Touch Bar support removed (not present on Apple Silicon Macs).
+* Java 17 compatibility: tolerate missing macOS EAWT integrations on startup.
+* Teensy serial monitor via teensy_serialmon pipe (TeensyPipeMonitor).
+* Teensy serial plotter pipe support in SerialPlotter.
+* Serial monitor buffer cap and minimum window size fixes.
+* arm64 host matching for Board Manager on Apple Silicon.
+* Network update checks disabled in distributed builds.
+* macOS-only build pipeline (linux/windows packaging removed from this fork).
 
 
 ARDUINO 1.8.19 2021.12.20 SECURITY HOTFIX RELEASE

@@ -91,6 +91,9 @@ public class HostDependentDownloadableContribution extends DownloadableContribut
     }
 
     if (osName.contains("Mac")) {
+      if (osArch.contains("aarch64") || osArch.contains("arm64")) {
+        return host.matches("arm64-apple-darwin.*");
+      }
       if (osArch.contains("x86_64")) {
         return host.matches("x86_64-apple-darwin.*") || host.matches("i[3456]86-apple-darwin.*");
       } else {

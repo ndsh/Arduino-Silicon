@@ -57,7 +57,8 @@ public abstract class AbstractMonitor extends JFrame implements ActionListener {
 
     onCreateWindow(getContentPane());
 
-    this.setMinimumSize(new Dimension(getContentPane().getMinimumSize().width, this.getPreferredSize().height));
+    int minHeight = getPreferredSize().height;
+    this.setMinimumSize(new Dimension(280, minHeight));
 
     pack();
 
@@ -183,7 +184,20 @@ public abstract class AbstractMonitor extends JFrame implements ActionListener {
     this.boardPort = boardPort;
   }
 
+  private static final int UPDATE_BUFFER_MAX = 262144;
+
   public synchronized void addToUpdateBuffer(char buff[], int n) {
+    if (n <= 0) {
+      return;
+    }
+    if (updateBuffer.length() + n > UPDATE_BUFFER_MAX) {
+      int excess = updateBuffer.length() + n - UPDATE_BUFFER_MAX;
+      if (excess >= updateBuffer.length()) {
+        updateBuffer.setLength(0);
+      } else {
+        updateBuffer.delete(0, excess);
+      }
+    }
     updateBuffer.append(buff, 0, n);
   }
 

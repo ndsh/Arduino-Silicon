@@ -116,7 +116,7 @@ public class SerialMonitor extends AbstractTextMonitor {
           break;
       }
       if ("".equals(s) && lineEndings.getSelectedIndex() == 0 && !PreferencesData.has("runtime.line.ending.alert.notified")) {
-        noLineEndingAlert.setForeground(Color.RED);
+        showLineEndingAlert();
         PreferencesData.set("runtime.line.ending.alert.notified", "true");
       }
       serial.write(s);

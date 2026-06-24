@@ -21,70 +21,90 @@
 package processing.app;
 
 import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 
 public class TextAreaFIFO extends JTextArea implements DocumentListener {
-  private int maxChars;
-  private int trimMaxChars;
-
-  private int updateCount; // limit how often we trim the document
-
-  private boolean doTrim;
+  private final int maxChars;
+  private final int trimTarget;
 
   public TextAreaFIFO(int max) {
     maxChars = max;
-    trimMaxChars = max / 2;
-    updateCount = 0;
-    doTrim = true;
+    trimTarget = max * 6 / 10;
     getDocument().addDocumentListener(this);
   }
 
-  public void insertUpdate(DocumentEvent e) {
-    if (++updateCount > 150 && doTrim) {
-      updateCount = 0;
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          trimDocument();
-        }
-      });
+  @Override
+  public void append(String str) {
+    appendWithTrim(str);
+  }
+
+  public void appendWithTrim(String str) {
+    if (str == null || str.isEmpty()) {
+      return;
+    }
+    makeRoom(str.length());
+    super.append(str);
+  }
+
+  public void appendWithoutTrim(String str) {
+    if (str == null || str.isEmpty()) {
+      return;
+    }
+    int len = getDocument().getLength();
+    if (len >= maxChars) {
+      return;
+    }
+    int free = maxChars - len;
+    if (str.length() > free) {
+      str = str.substring(0, free);
+    }
+    super.append(str);
+  }
+
+  private void makeRoom(int incomingLen) {
+    int len = getDocument().getLength();
+    int afterAppend = len + incomingLen;
+    if (afterAppend <= trimTarget) {
+      return;
+    }
+    int targetLen = Math.max(0, trimTarget - incomingLen);
+    if (len > targetLen) {
+      removeFromStart(len - targetLen);
     }
   }
 
-  public void removeUpdate(DocumentEvent e) {
-  }
-
-  public void changedUpdate(DocumentEvent e) {
+  private void removeFromStart(int count) {
+    if (count <= 0) {
+      return;
+    }
+    try {
+      getDocument().remove(0, count);
+    } catch (BadLocationException ignored) {
+    }
   }
 
   public void trimDocument() {
-    int len = 0;
-    len = getDocument().getLength();
-    if (len > trimMaxChars) {
-      int n = len - trimMaxChars;
-      //System.out.println("trimDocument: remove " + n + " chars");
-      try {
-        getDocument().remove(0, n);
-      } catch (BadLocationException ble) {
-      }
+    int len = getDocument().getLength();
+    if (len > trimTarget) {
+      removeFromStart(len - trimTarget);
     }
   }
 
-  public void appendNoTrim(String s) {
-    int free = maxChars - getDocument().getLength();
-    if (free <= 0)
-      return;
-    if (s.length() > free)
-      append(s.substring(0, free));
-    else
-      append(s);
-    doTrim = false;
+  @Override
+  public void insertUpdate(DocumentEvent e) {
+    int len = getDocument().getLength();
+    if (len > maxChars) {
+      removeFromStart(len - trimTarget);
+    }
   }
 
-  public void appendTrim(String str) {
-    append(str);
-    doTrim = true;
+  @Override
+  public void removeUpdate(DocumentEvent e) {
+  }
+
+  @Override
+  public void changedUpdate(DocumentEvent e) {
   }
 }

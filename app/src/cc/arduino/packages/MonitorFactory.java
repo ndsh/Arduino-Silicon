@@ -32,6 +32,7 @@ package cc.arduino.packages;
 import processing.app.AbstractMonitor;
 import processing.app.NetworkMonitor;
 import processing.app.SerialMonitor;
+import processing.app.TeensyPipeMonitor;
 
 public class MonitorFactory {
 
@@ -44,6 +45,10 @@ public class MonitorFactory {
         // SSH not supported, no monitor support
         return null;
       }
+    }
+
+    if ("Teensy".equals(port.getProtocol()) || port.getAddress().startsWith("usb:")) {
+      return new TeensyPipeMonitor(port);
     }
 
     return new SerialMonitor(port);

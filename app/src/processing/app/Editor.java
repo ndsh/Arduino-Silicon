@@ -2281,6 +2281,10 @@ public class Editor extends JFrame implements RunnerListener {
 
   }
 
+  private static AbstractMonitor newPlotter(BoardPort port) {
+    return new SerialPlotter(port);
+  }
+
   public void handlePlotter() {
     if(serialMonitor != null) {
       if(serialMonitor.isClosed()) {
@@ -2319,7 +2323,7 @@ public class Editor extends JFrame implements RunnerListener {
       return;
     }
 
-    serialPlotter = new SerialPlotter(port);
+    serialPlotter = newPlotter(port);
     Base.setIcon(serialPlotter);
 
     // If currently uploading, disable the plotter (it will be later

@@ -23,25 +23,12 @@
 
 package processing.app;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
-
-import com.thizzer.jtouchbar.JTouchBar;
-import com.thizzer.jtouchbar.item.TouchBarItem;
-import com.thizzer.jtouchbar.item.view.TouchBarButton;
-
-import cc.arduino.contributions.VersionComparator;
-import processing.app.helpers.OSUtils;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 import static processing.app.I18n.tr;
 import static processing.app.Theme.scale;
@@ -55,14 +42,16 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
    * Rollover titles for each button.
    */
   private static final String[] title = {
-    tr("Verify"), tr("Upload"), tr("New"), tr("Open"), tr("Save"), tr("Serial Monitor")
+    tr("Verify"), tr("Upload"), tr("New"), tr("Open"), tr("Save"),
+    tr("Serial Monitor"), tr("Serial Plotter")
   };
 
   /**
    * Titles for each button when the shift key is pressed.
    */
   private static final String[] titleShift = {
-    tr("Verify"), tr("Upload Using Programmer"), tr("New"), tr("Open"), tr("Save As..."), tr("Serial Plotter")
+    tr("Verify"), tr("Upload Using Programmer"), tr("New"), tr("Open"), tr("Save As..."),
+    tr("Serial Monitor"), tr("Serial Plotter")
   };
 
   private static final int BUTTON_COUNT = title.length;
@@ -92,6 +81,7 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
   private static final int SAVE = 4;
 
   private static final int SERIAL = 5;
+  private static final int PLOTTER = 6;
 
   private static final int INACTIVE = 0;
   private static final int ROLLOVER = 1;
@@ -106,13 +96,10 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
   private final Color bgcolor;
 
   private static Image[][] buttonImages;
-  private static com.thizzer.jtouchbar.common.Image[][] touchBarImages;
   private int currentRollover;
 
   private JPopupMenu popup;
   private final JMenu menu;
-  private JTouchBar touchBar;
-  private TouchBarButton[] touchBarButtons;
 
   private int buttonCount;
   private int[] state = new int[BUTTON_COUNT];
@@ -143,6 +130,7 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
     which[buttonCount++] = OPEN;
     which[buttonCount++] = SAVE;
     which[buttonCount++] = SERIAL;
+    which[buttonCount++] = PLOTTER;
 
     currentRollover = -1;
 
@@ -150,59 +138,9 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
     statusFont = Theme.getFont("buttons.status.font");
     statusColor = Theme.getColor("buttons.status.color");
 
-    if (OSUtils.isMacOS() && VersionComparator.greaterThanOrEqual(OSUtils.version(), "10.12")) {
-      editor.addWindowListener(new WindowAdapter() {
-        public void windowActivated(WindowEvent e) {
-          if (touchBar == null) {
-            buildTouchBar();
-            
-            touchBar.show(editor); 
-          }               
-        }
-      });
-    }
-    
     addMouseListener(this);
     addMouseMotionListener(this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-  }
-  
-  private void buildTouchBar() {
-    if (touchBarImages == null) {
-      loadTouchBarImages();
-    }
-    
-    touchBar = new JTouchBar();
-    touchBarButtons = new TouchBarButton[BUTTON_COUNT];
-    touchBar.setCustomizationIdentifier("Arduino");
-    
-    for (int i = 0; i < BUTTON_COUNT; i++) {
-      final int selection = i;
-      
-      // add spacers before NEW and SERIAL buttons
-      if (i == NEW) {
-        touchBar.addItem(new TouchBarItem(TouchBarItem.NSTouchBarItemIdentifierFixedSpaceSmall));
-      } else if (i == SERIAL) {
-        touchBar.addItem(new TouchBarItem(TouchBarItem.NSTouchBarItemIdentifierFlexibleSpace));
-      }
-      
-      touchBarButtons[i] = new TouchBarButton();
-      touchBarButtons[i].setImage(touchBarImages[i][ROLLOVER]);
-      touchBarButtons[i].setAction(event -> {
-        // Run event handler later to prevent hanging if a dialog needs to be open
-        EventQueue.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            handleSelectionPressed(selection);
-          }
-        });
-      });
-      
-      TouchBarItem touchBarItem = new TouchBarItem(title[i], touchBarButtons[i], true);
-      touchBarItem.setCustomizationLabel(title[i]);
-      
-      touchBar.addItem(touchBarItem);
-    }
   }
 
   private void loadButtons() {
@@ -221,36 +159,6 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
         g.drawImage(allButtons, -(i * BUTTON_IMAGE_SIZE) - offset,
                     (-2 + state) * BUTTON_IMAGE_SIZE, null);
         buttonImages[i][state] = image;
-      }
-    }
-  }
-  
-  private void loadTouchBarImages() {
-    Image allButtonsRetina = Theme.getThemeImage("buttons", this,
-                                           BUTTON_IMAGE_SIZE * BUTTON_COUNT * 2,
-                                           BUTTON_IMAGE_SIZE * 3 * 2);
-    touchBarImages = new com.thizzer.jtouchbar.common.Image[BUTTON_COUNT][3];
-
-    for (int i = 0; i < BUTTON_COUNT; i++) {
-      for (int state = 0; state < 3; state++) {
-        BufferedImage image = new BufferedImage(BUTTON_WIDTH * 2, BUTTON_HEIGHT * 2, 
-                                                BufferedImage.TYPE_INT_ARGB);
-        Graphics g = image.getGraphics();
-
-        int offset = (BUTTON_IMAGE_SIZE * 2 - BUTTON_WIDTH * 2) / 2;
-        g.drawImage(allButtonsRetina, -(i * BUTTON_IMAGE_SIZE * 2) - offset,
-                    (-2 + state) * BUTTON_IMAGE_SIZE * 2, null);        
-        
-        // convert the image to a PNG to display on the touch bar
-        ByteArrayOutputStream pngStream = new ByteArrayOutputStream();
-        
-        try {
-          ImageIO.write(image, "PNG", pngStream);
-
-          touchBarImages[i][state] = new com.thizzer.jtouchbar.common.Image(pngStream.toByteArray());
-        } catch (IOException e) {
-          // ignore errors
-        }
       }
     }
   }
@@ -290,9 +198,11 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
         offsetX = x2[i];
       }
 
-      // Serial button must be on the right
-      x1[SERIAL] = width - BUTTON_WIDTH - 14;
-      x2[SERIAL] = width - 14;
+      // Serial monitor and plotter on the right
+      x1[PLOTTER] = width - BUTTON_WIDTH - 14;
+      x2[PLOTTER] = width - 14;
+      x1[SERIAL] = x1[PLOTTER] - BUTTON_WIDTH;
+      x2[SERIAL] = x1[PLOTTER];
     }
     Graphics2D g = Theme.setupGraphics2D(offscreen.getGraphics());
     g.setColor(bgcolor); //getBackground());
@@ -319,10 +229,10 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
     if (currentRollover != -1) {
       int statusY = (BUTTON_HEIGHT + g.getFontMetrics().getAscent()) / 2;
       String status = shiftPressed ? titleShift[currentRollover] : title[currentRollover];
-      if (currentRollover != SERIAL)
+      if (currentRollover != SERIAL && currentRollover != PLOTTER) {
         g.drawString(status, (buttonCount - 1) * BUTTON_WIDTH + 3 * BUTTON_GAP, statusY);
-      else {
-        int statusX = x1[SERIAL] - BUTTON_GAP;
+      } else {
+        int statusX = x1[currentRollover] - BUTTON_GAP;
         statusX -= g.getFontMetrics().stringWidth(status);
         g.drawString(status, statusX, statusY);
       }
@@ -401,15 +311,6 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
     stateImage[slot] = buttonImages[which[slot]][newState];
     if (updateAfter) {
       repaint();
-    }
-    
-    if (touchBarButtons != null) { 
-      if (newState == INACTIVE) {
-        // use ROLLOVER state when INACTIVE
-        newState = ROLLOVER;
-      }
-      
-      touchBarButtons[slot].setImage(touchBarImages[slot][newState]);
     }
   }
 
@@ -500,11 +401,11 @@ public class EditorToolbar extends JComponent implements MouseInputListener, Key
         break;
 
       case SERIAL:
-        if (isShiftDown) {
-          editor.handlePlotter();
-        } else {
-          editor.handleSerial();
-        }
+        editor.handleSerial();
+        break;
+
+      case PLOTTER:
+        editor.handlePlotter();
         break;
 
       default:

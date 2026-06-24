@@ -6,6 +6,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -71,9 +72,9 @@ public abstract class AbstractTextMonitor extends AbstractMonitor {
 
     mainPane.setLayout(new BorderLayout());
 
-    textArea = new TextAreaFIFO(8_000_000);
+    textArea = new TextAreaFIFO(2_000_000);
     textArea.setRows(16);
-    textArea.setColumns(40);
+    textArea.setColumns(1);
     textArea.setEditable(false);
 
     // don't automatically update the caret.  that way we can manually decide
@@ -84,11 +85,10 @@ public abstract class AbstractTextMonitor extends AbstractMonitor {
 
     mainPane.add(scrollPane, BorderLayout.CENTER);
 
-    JPanel upperPane = new JPanel();
-    upperPane.setLayout(new BoxLayout(upperPane, BoxLayout.X_AXIS));
+    JPanel upperPane = new JPanel(new BorderLayout(4, 0));
     upperPane.setBorder(new EmptyBorder(4, 4, 4, 4));
 
-    textField = new JTextField(40);
+    textField = new JTextField();
     // textField is selected every time the window is focused
     addWindowFocusListener(new WindowAdapter() {
       @Override
@@ -115,16 +115,15 @@ public abstract class AbstractTextMonitor extends AbstractMonitor {
     textField.setComponentPopupMenu(menu);
 
     sendButton = new JButton(tr("Send"));
-    clearButton = new JButton(tr("Clear output"));
 
-    upperPane.add(textField);
-    upperPane.add(Box.createRigidArea(new Dimension(4, 0)));
-    upperPane.add(sendButton);
+    upperPane.add(textField, BorderLayout.CENTER);
+    upperPane.add(sendButton, BorderLayout.EAST);
 
     mainPane.add(upperPane, BorderLayout.NORTH);
 
-    final JPanel pane = new JPanel();
-    pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
+    clearButton = new JButton(tr("Clear output"));
+
+    final JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
     pane.setBorder(new EmptyBorder(4, 4, 4, 4));
 
     autoscrollBox = new JCheckBox(tr("Autoscroll"), true);
@@ -132,15 +131,12 @@ public abstract class AbstractTextMonitor extends AbstractMonitor {
 
     noLineEndingAlert = new JLabel(I18n.format(tr("You've pressed {0} but nothing was sent. Should you select a line ending?"), tr("Send")));
     noLineEndingAlert.setToolTipText(noLineEndingAlert.getText());
-    noLineEndingAlert.setForeground(pane.getBackground());
-    Dimension minimumSize = new Dimension(noLineEndingAlert.getMinimumSize());
-    minimumSize.setSize(minimumSize.getWidth() / 3, minimumSize.getHeight());
-    noLineEndingAlert.setMinimumSize(minimumSize);
+    hideLineEndingAlert(pane.getBackground());
 
     lineEndings = new JComboBox<>(new String[]{tr("No line ending"), tr("Newline"), tr("Carriage return"), tr("Both NL & CR")});
     lineEndings.addActionListener((ActionEvent event) -> {
       PreferencesData.setInteger("serial.line_ending", lineEndings.getSelectedIndex());
-      noLineEndingAlert.setForeground(pane.getBackground());
+      hideLineEndingAlert(pane.getBackground());
     });
     addTimeStampBox.addActionListener((ActionEvent event) ->
         PreferencesData.setBoolean("serial.show_timestamp", addTimeStampBox.isSelected()));
@@ -156,18 +152,24 @@ public abstract class AbstractTextMonitor extends AbstractMonitor {
 
     pane.add(autoscrollBox);
     pane.add(addTimeStampBox);
-    pane.add(Box.createHorizontalGlue());
     pane.add(noLineEndingAlert);
-    pane.add(Box.createRigidArea(new Dimension(8, 0)));
     pane.add(lineEndings);
-    pane.add(Box.createRigidArea(new Dimension(8, 0)));
     pane.add(serialRates);
-    pane.add(Box.createRigidArea(new Dimension(8, 0)));
     pane.add(clearButton);
 
     applyPreferences();
 
     mainPane.add(pane, BorderLayout.SOUTH);
+  }
+
+  protected void hideLineEndingAlert(Color background) {
+    noLineEndingAlert.setForeground(background);
+    noLineEndingAlert.setVisible(false);
+  }
+
+  protected void showLineEndingAlert() {
+    noLineEndingAlert.setForeground(Color.RED);
+    noLineEndingAlert.setVisible(true);
   }
 
   @Override
@@ -217,10 +219,14 @@ public abstract class AbstractTextMonitor extends AbstractMonitor {
   private boolean isStartingLine = true;
 
   protected void updateTextArea(String msg) {
-    if (addTimeStampBox.isSelected()) {
-      textArea.append(addTimestamps(msg));
+    if (msg == null || msg.isEmpty()) {
+      return;
+    }
+    String text = addTimeStampBox.isSelected() ? addTimestamps(msg) : msg;
+    if (autoscrollBox.isSelected()) {
+      textArea.appendWithTrim(text);
     } else {
-      textArea.append(msg);
+      textArea.appendWithoutTrim(text);
     }
     if (autoscrollBox.isSelected()) {
       textArea.setCaretPosition(textArea.getDocument().getLength());
